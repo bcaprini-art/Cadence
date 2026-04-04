@@ -1,0 +1,14 @@
+{
+  "name": "cadence-landing",
+  "version": "1.0.0",
+  "description": "Cadence marketing landing page",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5174",
+    "build": "vite build",
+    "preview": "vite preview --port 5174"
+  },
+  "devDependencies": {
+    "vite": "^5.2.0"
+  }
+}

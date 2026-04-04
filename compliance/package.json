@@ -1,0 +1,30 @@
+{
+  "name": "@athletisync/compliance",
+  "version": "1.0.0",
+  "description": "NCAA/NAIA compliance rules engine for AthletiSync — validates CARA hour limits, dead periods, and mandatory rest days across all divisions.",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --coverage",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [
+    "ncaa",
+    "naia",
+    "compliance",
+    "cara",
+    "athletics",
+    "scheduling"
+  ],
+  "author": "AthletiSync",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "index.js"
+    ]
+  }
+}

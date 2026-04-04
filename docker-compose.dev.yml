@@ -1,0 +1,33 @@
+version: '3.8'
+
+# Development override — use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+# Or just run scripts/start-dev.sh for a faster local dev experience (no Docker for hot reload)
+
+services:
+  db:
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/prisma:/app/prisma
+    environment:
+      NODE_ENV: development
+    command: ["npx", "nodemon", "src/index.js"]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    ports:
+      - "5173:5173"
+    environment:
+      NODE_ENV: development
+    command: ["npm", "run", "dev", "--", "--host"]
