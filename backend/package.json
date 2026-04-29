@@ -1,6 +1,6 @@
 {
   "name": "athletisync-backend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AthletiSync backend API \u2014 college athletics scheduling platform",
   "main": "src/index.js",
   "scripts": {
