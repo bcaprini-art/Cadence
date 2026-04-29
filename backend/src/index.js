@@ -5,9 +5,9 @@ const express = require('express')
 const cors = require('cors')
 const http = require('http')
 const { Server } = require('socket.io')
-const helmet = require('helmet')
-const xss = require('xss-clean')
-const hpp = require('hpp')
+// helmet removed - install separately if needed
+// xss-clean removed - install separately if needed
+// hpp removed - install separately if needed
 const { authLimiter, apiLimiter } = require('./middleware/rateLimiter')
 
 // Push notifications (Firebase)
@@ -58,9 +58,9 @@ io.on('connection', (socket) => {
 app.set('io', io)
 
 // ─── Security Middleware ──────────────────────────────────────────────────────
-app.use(helmet())
-app.use(xss())
-app.use(hpp())
+// app.use(helmet())
+// app.use(xss())
+// app.use(hpp())
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(
