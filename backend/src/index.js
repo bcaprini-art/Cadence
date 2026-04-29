@@ -8,7 +8,7 @@ const { Server } = require('socket.io')
 // helmet removed - install separately if needed
 // xss-clean removed - install separately if needed
 // hpp removed - install separately if needed
-const { authLimiter, apiLimiter } = require('./middleware/rateLimiter')
+// const { authLimiter, apiLimiter } = require('./middleware/rateLimiter') // disabled for deploy
 
 // Push notifications (Firebase)
 const { initFirebase } = require('./lib/push')
@@ -82,8 +82,8 @@ const path = require('path')
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')))
 
 // ─── Rate Limiting ────────────────────────────────────────────────────────────
-app.use('/api/auth', authLimiter)
-app.use('/api', apiLimiter)
+// app.use('/api/auth', authLimiter)
+// app.use('/api', apiLimiter)
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes)
