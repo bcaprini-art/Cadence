@@ -8,7 +8,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const API_BASE_URL = 'http://localhost:4001/api';
+export const API_BASE_URL = __DEV__ ? 'http://192.168.4.20:4007/api' : 'https://cadence-api-yhne.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
