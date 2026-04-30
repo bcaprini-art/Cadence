@@ -19,6 +19,11 @@
         "backgroundColor": "#0a0f1e"
       }
     },
-    "scheme": "cadence"
+    "scheme": "cadence",
+    "plugins": [
+      "expo-asset",
+      "expo-font"
+    ],
+    "sdkVersion": "54.0.0"
   }
 }
