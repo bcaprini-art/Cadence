@@ -1,17 +1,36 @@
 /**
  * Startup script — runs prisma db push then starts the Express server.
- * Lives at repo root since Railway deploys from the root.
+ * Falls back to writing .env if Railway doesn't inject user-defined variables.
  */
 const { execSync } = require('child_process')
 const path = require('path')
+const fs = require('fs')
 
 const backendDir = path.join(__dirname, 'backend')
 
-// Load dotenv for local dev — Railway injects env vars into the Node process directly
+// Load dotenv for local dev
 try {
   require(path.join(backendDir, 'node_modules', 'dotenv')).config({ path: path.join(backendDir, '.env') })
 } catch {
   // dotenv is optional
+}
+
+// Railway injects PORT (8080) automatically but USER-DEFINED env vars
+// (DATABASE_URL, JWT_SECRET, CLIENT_URL) sometimes don't get through
+// to the Prisma CLI. If missing, write them to .env so Prisma can read them.
+if (!process.env.DATABASE_URL) {
+  console.log('[startup] DATABASE_URL not in process.env — checking for .env.production')
+
+  // Try .env.production first (committed file with production values)
+  const prodEnvPath = path.join(backendDir, '.env.production')
+  if (fs.existsSync(prodEnvPath)) {
+    fs.copyFileSync(prodEnvPath, path.join(backendDir, '.env'))
+    console.log('[startup] Copied .env.production → .env')
+    // Reload env
+    try {
+      require(path.join(backendDir, 'node_modules', 'dotenv')).config({ path: path.join(backendDir, '.env') })
+    } catch {}
+  }
 }
 
 console.log('[startup] DATABASE_URL set?', !!process.env.DATABASE_URL)
