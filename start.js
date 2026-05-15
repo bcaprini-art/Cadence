@@ -1,16 +1,17 @@
 /**
  * Startup script — runs prisma db push then starts the Express server.
- * Wrapped in Node.js so Railway's env vars are properly available
- * (npx doesn't always inherit them on Railway's build step).
+ * Lives at repo root since Railway deploys from the root.
  */
 const { execSync } = require('child_process')
 const path = require('path')
 
+const backendDir = path.join(__dirname, 'backend')
+
 // Load dotenv for local dev — Railway injects env vars into the Node process directly
 try {
-  require('dotenv').config({ path: path.join(__dirname, '.env') })
+  require(path.join(backendDir, 'node_modules', 'dotenv')).config({ path: path.join(backendDir, '.env') })
 } catch {
-  // dotenv is optional — Railway provides env vars natively
+  // dotenv is optional
 }
 
 console.log('[startup] DATABASE_URL set?', !!process.env.DATABASE_URL)
@@ -19,7 +20,7 @@ console.log('[startup] DATABASE_URL set?', !!process.env.DATABASE_URL)
 try {
   console.log('[startup] Running prisma db push...')
   execSync('npx prisma db push --skip-generate', {
-    cwd: __dirname,
+    cwd: backendDir,
     stdio: 'inherit',
     env: { ...process.env },
   })
@@ -30,4 +31,4 @@ try {
 }
 
 // Start the main app
-require('./src/index.js')
+require(path.join(backendDir, 'src', 'index.js'))

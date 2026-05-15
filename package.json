@@ -1,7 +1,8 @@
 {
-  "name": "cadence-monorepo",
-  "private": true,
+  "name": "cadence-api",
   "scripts": {
-    "deploy:backend": "cd backend && npm start"
+    "start": "node start.js",
+    "build": "cd backend && npx prisma generate",
+    "postinstall": "cd backend && npm install && npx prisma generate"
   }
 }
