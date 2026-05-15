@@ -9,7 +9,9 @@ const path = require('path')
 // Load dotenv for local dev — Railway injects env vars into the Node process directly
 try {
   require('dotenv').config({ path: path.join(__dirname, '.env') })
-} catch { /* dotenv might not be loaded yet, that's fine */ }
+} catch {
+  // dotenv is optional — Railway provides env vars natively
+}
 
 console.log('[startup] DATABASE_URL set?', !!process.env.DATABASE_URL)
 
