@@ -113,7 +113,16 @@ app.use('/api/assistant-coaches', assistantCoachRoutes)
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    env: {
+      hasDB: !!process.env.DATABASE_URL,
+      hasJWT: !!process.env.JWT_SECRET,
+      port: process.env.PORT,
+      nodeEnv: process.env.NODE_ENV,
+    },
+  })
 })
 
 // ─── Security status (ADMIN only) ─────────────────────────────────────────────
