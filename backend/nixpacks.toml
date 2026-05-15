@@ -1,0 +1,14 @@
+[nixpacks.plan.providers]
+node = true
+
+[nixpacks.plan.phases.setup]
+nixPkgs = ["openssl"]
+
+[nixpacks.plan.phases.install]
+cmds = ["npm install"]
+
+[nixpacks.plan.phases.build]
+cmds = ["npm run build"]
+
+[nixpacks.plan.phases.start]
+cmd = "npm start"

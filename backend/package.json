@@ -4,14 +4,16 @@
   "description": "AthletiSync backend API — college athletics scheduling platform",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
+    "start": "npx prisma generate && npx prisma db push && node src/index.js",
+    "build": "npx prisma generate",
     "dev": "nodemon src/index.js",
     "test": "jest --testPathPattern=src/__tests__ --runInBand --forceExit",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "postinstall": "npx prisma generate"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^6.0.0",

@@ -1,0 +1,7 @@
+{
+  "name": "cadence-monorepo",
+  "private": true,
+  "scripts": {
+    "deploy:backend": "cd backend && npm start"
+  }
+}
