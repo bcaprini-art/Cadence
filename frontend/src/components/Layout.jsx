@@ -8,6 +8,8 @@ import { requestNotificationPermission, setupForegroundListener, isConfigured } 
 const athleteNav = [
   { path: '/dashboard', label: 'Home', icon: '🏠' },
   { path: '/my-schedule', label: 'My Schedule', icon: '📅' },
+  { path: '/todo', label: 'To-Do', icon: '✅' },
+  { path: '/profile', label: 'Profile', icon: '👤' },
 ];
 
 const coachNav = [
@@ -15,6 +17,8 @@ const coachNav = [
   { path: '/team-availability', label: 'Availability', icon: '🔥' },
   { path: '/schedule-event', label: 'Schedule Event', icon: '📅' },
   { path: '/roster', label: 'Roster', icon: '👥' },
+  { path: '/teacher-portal', label: 'Grades', icon: '📚' },
+  { path: '/travel', label: 'Travel', icon: '✈️' },
   { path: '/compliance', label: 'Compliance', icon: '📋' },
   { path: '/cara-forecast', label: 'CARA Forecast', icon: '📊' },
 ];

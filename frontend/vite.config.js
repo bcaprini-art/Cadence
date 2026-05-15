@@ -9,15 +9,15 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
-    host: true, // allow external connections
-    allowedHosts: 'all', // allow ngrok and any other host
+    host: true,
+    allowedHosts: 'all',
     proxy: {
       '/api': {
-        target: 'http://localhost:4001',
+        target: 'http://localhost:4008',
         changeOrigin: true,
       },
       '/socket.io': {
-        target: 'ws://localhost:4001',
+        target: 'ws://localhost:4008',
         ws: true,
         changeOrigin: true,
       },

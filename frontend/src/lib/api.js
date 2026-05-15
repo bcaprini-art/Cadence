@@ -93,3 +93,43 @@ export const adminAPI = {
   getSchoolStats: (id) => api.get(`/admin/schools/${id}/stats`),
   getVenues: (schoolId) => api.get('/admin/venues', { params: schoolId ? { schoolId } : {} }),
 };
+
+// Profile
+export const profileAPI = {
+  getMyProfile: () => api.get('/profile'),
+  updateProfile: (data) => api.put('/profile', data),
+};
+
+// Todos
+export const todoAPI = {
+  getTodos: () => api.get('/todos'),
+  createTodo: (data) => api.post('/todos', data),
+  updateTodo: (id, data) => api.put(`/todos/${id}`, data),
+  deleteTodo: (id) => api.delete(`/todos/${id}`),
+  toggleTodo: (id) => api.patch(`/todos/${id}/toggle`),
+};
+
+// Grades
+export const gradesAPI = {
+  getMyGrades: () => api.get('/grades/athlete'),
+  getTeamGrades: (teamId) => api.get(`/grades/team/${teamId}`),
+  enterGrade: (data) => api.post('/grades', data),
+  getTeacherGrades: () => api.get('/grades/teacher'),
+};
+
+// Trips
+export const tripsAPI = {
+  getTrips: (params) => api.get('/trips', { params }),
+  getTrip: (id) => api.get(`/trips/${id}`),
+  createTrip: (data) => api.post('/trips', data),
+  updateTrip: (id, data) => api.put(`/trips/${id}`, data),
+  deleteTrip: (id) => api.delete(`/trips/${id}`),
+};
+
+// Assistant Coach
+export const coachAPI = {
+  getAssistantCoaches: (teamId) => api.get(`/assistant-coaches/team/${teamId}`),
+  addAssistantCoach: (data) => api.post('/assistant-coaches', data),
+  updateAssistantCoach: (id, data) => api.put(`/assistant-coaches/${id}`, data),
+  removeAssistantCoach: (id) => api.delete(`/assistant-coaches/${id}`),
+};

@@ -29,6 +29,11 @@ const adminRoutes = require('./routes/admin')
 const complianceRoutes = require('./routes/compliance')
 const pushRoutes = require('./routes/push')
 const sportsRoutes = require('./routes/sports')
+const playerProfileRoutes = require('./routes/playerProfile')
+const todoRoutes = require('./routes/todoItems')
+const gradeRoutes = require('./routes/grades')
+const tripRoutes = require('./routes/trips')
+const assistantCoachRoutes = require('./routes/assistantCoach')
 
 const app = express()
 const server = http.createServer(app)
@@ -100,6 +105,11 @@ app.use('/api/admin', adminRoutes)
 app.use('/api/compliance', complianceRoutes)
 app.use('/api/push', pushRoutes)
 app.use('/api/sports', sportsRoutes)
+app.use('/api/profile', playerProfileRoutes)
+app.use('/api/todos', todoRoutes)
+app.use('/api/grades', gradeRoutes)
+app.use('/api/trips', tripRoutes)
+app.use('/api/assistant-coaches', assistantCoachRoutes)
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
