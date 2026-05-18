@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import api from '../../lib/api';
+import { useAuth } from '../context/AuthContext';
+import api from '../lib/api';
 import { format, parseISO } from 'date-fns';
 
 const APPOINTMENT_TYPES = [
