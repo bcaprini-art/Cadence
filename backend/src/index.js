@@ -34,6 +34,8 @@ const todoRoutes = require('./routes/todoItems')
 const gradeRoutes = require('./routes/grades')
 const tripRoutes = require('./routes/trips')
 const assistantCoachRoutes = require('./routes/assistantCoach')
+const appointmentRoutes = require('./routes/appointments')
+const notificationRoutes = require('./routes/notifications')
 
 const app = express()
 const server = http.createServer(app)
@@ -110,6 +112,8 @@ app.use('/api/todos', todoRoutes)
 app.use('/api/grades', gradeRoutes)
 app.use('/api/trips', tripRoutes)
 app.use('/api/assistant-coaches', assistantCoachRoutes)
+app.use('/api/appointments', appointmentRoutes)
+app.use('/api/notifications', notificationRoutes)
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {

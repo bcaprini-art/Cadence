@@ -8,7 +8,9 @@ import { requestNotificationPermission, setupForegroundListener, isConfigured } 
 const athleteNav = [
   { path: '/dashboard', label: 'Home', icon: '🏠' },
   { path: '/my-schedule', label: 'My Schedule', icon: '📅' },
+  { path: '/appointments', label: 'Appointments', icon: '📅' },
   { path: '/todo', label: 'To-Do', icon: '✅' },
+  { path: '/inbox', label: 'Inbox', icon: '🔔' },
   { path: '/profile', label: 'Profile', icon: '👤' },
 ];
 

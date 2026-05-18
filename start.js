@@ -8,11 +8,15 @@ const fs = require('fs')
 
 const backendDir = path.join(__dirname, 'backend')
 
-// Try loading dotenv for local dev — ignore if not available
+// Try loading dotenv for local dev — try both root and backend node_modules
 try {
-  require(path.join(backendDir, 'node_modules', 'dotenv')).config({ path: path.join(backendDir, '.env') })
+  require('dotenv').config({ path: path.join(backendDir, '.env') })
 } catch {
-  // dotenv is optional — Railway provides env vars natively (or we fallback below)
+  try {
+    require(path.join(backendDir, 'node_modules', 'dotenv')).config({ path: path.join(backendDir, '.env') })
+  } catch {
+    // dotenv is optional — Railway provides env vars natively (or we fallback below)
+  }
 }
 
 // Railway often fails to inject user-defined env vars (DATABASE_URL, JWT_SECRET, etc.)

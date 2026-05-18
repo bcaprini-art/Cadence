@@ -49,3 +49,4 @@ backups/
 
 # Coverage
 coverage/
+.vercel

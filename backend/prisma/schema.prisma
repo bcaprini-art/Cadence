@@ -127,6 +127,9 @@ model User {
   gradesReceived     Grade[]         @relation("GradeAthlete")
   assistantCoachTeams AssistantCoachTeam[]
   tripsCreated       Trip[]          @relation("TripCreator")
+  appointmentsBooked    Appointment[] @relation("AppointmentAthlete")
+  appointmentsAsCoach   Appointment[] @relation("AppointmentCoach")
+  notifications         Notification[]
 }
 
 model Team {
@@ -316,7 +319,52 @@ model FCMToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+// ─── APPOINTMENT TYPE ENUM ───────────────────────────────────
+enum AppointmentType {
+  OFFICE_VISIT
+  TRAINING_SESSION
+  ATHLETIC_TRAINING
+  SPORTS_PSYCHOLOGY
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
 // ─── NEW MODELS ──────────────────────────────────────────────
+
+model Appointment {
+  id          String            @id @default(cuid())
+  athleteId   String
+  coachId     String?
+  title       String
+  type        AppointmentType
+  status      AppointmentStatus @default(PENDING)
+  startTime   DateTime
+  endTime     DateTime?
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  athlete User  @relation("AppointmentAthlete", fields: [athleteId], references: [id])
+  coach   User? @relation("AppointmentCoach", fields: [coachId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String?
+  type      String?  // EVENT_CREATED, EVENT_UPDATED, APPOINTMENT_BOOKED, TODO_DUE, etc.
+  link      String?  // deep link to relevant page
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 
 model PlayerProfile {
   id           String   @id @default(cuid())

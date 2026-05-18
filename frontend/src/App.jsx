@@ -22,6 +22,8 @@ import TodoList from './pages/athlete/TodoList';
 import PlayerProfile from './pages/athlete/PlayerProfile';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import EnterGrades from './pages/teacher/EnterGrades';
+import BookAppointments from './pages/BookAppointments';
+import NotificationsPage from './pages/Notifications';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -88,6 +90,8 @@ export default function App() {
       <Route path="/profile" element={<PrivateRoute><PlayerProfile /></PrivateRoute>} />
       <Route path="/teacher-portal" element={<PrivateRoute><TeacherPortal /></PrivateRoute>} />
       <Route path="/travel" element={<PrivateRoute><TravelView /></PrivateRoute>} />
+      <Route path="/appointments" element={<PrivateRoute><BookAppointments /></PrivateRoute>} />
+      <Route path="/inbox" element={<PrivateRoute><NotificationsPage /></PrivateRoute>} />
       <Route path="/teacher/dashboard" element={<TeacherRoute><TeacherDashboard /></TeacherRoute>} />
       <Route path="/teacher/enter-grades" element={<TeacherRoute><EnterGrades /></TeacherRoute>} />
       <Route path="/teacher/grades" element={<TeacherRoute><TeacherDashboard /></TeacherRoute>} />

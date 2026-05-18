@@ -1,39 +1,45 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   getStoredNotifications,
   markAllRead,
   isConfigured,
   requestNotificationPermission,
 } from '../lib/firebase';
+import { notificationAPI } from '../lib/api';
 
 export default function NotificationBell() {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
+  const [backendUnread, setBackendUnread] = useState(0);
   const [open, setOpen] = useState(false);
-  const [permissionState, setPermissionState] = useState('default'); // 'default' | 'granted' | 'denied'
+  const [permissionState, setPermissionState] = useState('default');
   const [enabling, setEnabling] = useState(false);
   const dropdownRef = useRef(null);
 
   const unread = notifications.filter((n) => !n.read).length;
+  const totalUnread = unread + backendUnread;
 
   const refresh = useCallback(() => {
     setNotifications(getStoredNotifications());
+    // Also fetch backend unread count
+    notificationAPI.getUnreadCount().then(({ data }) => {
+      setBackendUnread(data.count || 0);
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
     refresh();
 
-    // Check current permission
     if ('Notification' in window) {
       setPermissionState(Notification.permission);
     }
 
-    // Listen for new incoming notifications (foreground)
     const handler = () => refresh();
     window.addEventListener('cadence:notification', handler);
     return () => window.removeEventListener('cadence:notification', handler);
   }, [refresh]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
@@ -47,8 +53,9 @@ export default function NotificationBell() {
 
   const handleOpen = () => {
     setOpen((o) => !o);
-    if (!open && unread > 0) {
+    if (!open && (unread > 0 || backendUnread > 0)) {
       markAllRead();
+      setBackendUnread(0);
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     }
   };
@@ -104,10 +111,9 @@ export default function NotificationBell() {
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
 
-        {/* Unread badge */}
-        {unread > 0 && (
+        {totalUnread > 0 && (
           <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-green-500 text-black text-[10px] font-bold rounded-full flex items-center justify-center">
-            {unread > 9 ? '9+' : unread}
+            {totalUnread > 9 ? '9+' : totalUnread}
           </span>
         )}
       </button>
@@ -118,20 +124,24 @@ export default function NotificationBell() {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
             <span className="text-sm font-semibold text-white">Notifications</span>
-            {notifications.length > 0 && (
-              <button
-                onClick={() => {
-                  markAllRead();
-                  setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-                }}
-                className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
-              >
-                Mark all read
-              </button>
-            )}
+            <button
+              onClick={() => navigate('/inbox')}
+              className="text-xs text-green-400 hover:text-green-300 transition-colors"
+            >
+              View all →
+            </button>
           </div>
 
-          {/* Enable prompt — show if Firebase configured but permission not granted */}
+          {/* In-app notification badge for backend unread */}
+          {backendUnread > 0 && (
+            <div className="px-4 py-2 bg-blue-500/10 border-b border-white/10 flex items-center gap-2">
+              <span className="text-xs text-blue-400">
+                {backendUnread} unread from Cadence
+              </span>
+            </div>
+          )}
+
+          {/* Enable prompt */}
           {isConfigured && permissionState !== 'granted' && permissionState !== 'denied' && (
             <div className="px-4 py-3 border-b border-white/10 bg-green-500/5">
               <p className="text-xs text-gray-400 mb-2">Get real-time alerts for schedule changes.</p>
@@ -155,37 +165,40 @@ export default function NotificationBell() {
 
           {/* Notification list */}
           <div className="max-h-80 overflow-y-auto">
-            {notifications.length === 0 ? (
+            {notifications.length === 0 && backendUnread === 0 ? (
               <div className="px-4 py-8 text-center">
                 <p className="text-gray-500 text-sm">No notifications yet</p>
                 <p className="text-gray-600 text-xs mt-1">Schedule alerts will appear here</p>
               </div>
             ) : (
-              notifications.map((n) => (
-                <div
-                  key={n.id}
-                  className={`px-4 py-3 border-b border-white/5 last:border-0 transition-colors ${
-                    !n.read ? 'bg-green-500/5' : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-2">
-                    {!n.read && (
-                      <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" />
-                    )}
-                    <div className={!n.read ? '' : 'ml-3.5'}>
-                      <p className="text-sm font-medium text-white leading-tight">{n.title}</p>
-                      {n.body && <p className="text-xs text-gray-400 mt-0.5 leading-snug">{n.body}</p>}
-                      <p className="text-[10px] text-gray-600 mt-1">{formatTime(n.timestamp)}</p>
+              <>
+                {/* Backend notifications (only show latest few) */}
+                {notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    className={`px-4 py-3 border-b border-white/5 last:border-0 transition-colors ${
+                      !n.read ? 'bg-green-500/5' : ''
+                    }`}
+                  >
+                    <div className="flex items-start gap-2">
+                      {!n.read && (
+                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0" />
+                      )}
+                      <div className={!n.read ? '' : 'ml-3.5'}>
+                        <p className="text-sm font-medium text-white leading-tight">{n.title}</p>
+                        {n.body && <p className="text-xs text-gray-400 mt-0.5 leading-snug">{n.body}</p>}
+                        <p className="text-[10px] text-gray-600 mt-1">{formatTime(n.timestamp)}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </>
             )}
           </div>
 
-          {/* Footer — clear all */}
-          {notifications.length > 0 && (
-            <div className="px-4 py-2 border-t border-white/10 text-center">
+          {/* Footer */}
+          <div className="px-4 py-2 border-t border-white/10 flex justify-center gap-4">
+            {notifications.length > 0 && (
               <button
                 onClick={() => {
                   localStorage.removeItem('cadence_notifications');
@@ -193,10 +206,16 @@ export default function NotificationBell() {
                 }}
                 className="text-xs text-gray-600 hover:text-gray-400 transition-colors"
               >
-                Clear all
+                Clear local
               </button>
-            </div>
-          )}
+            )}
+            <button
+              onClick={() => navigate('/inbox')}
+              className="text-xs text-gray-600 hover:text-green-400 transition-colors"
+            >
+              All notifications →
+            </button>
+          </div>
         </div>
       )}
     </div>

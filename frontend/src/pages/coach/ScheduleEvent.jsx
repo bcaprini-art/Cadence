@@ -27,6 +27,7 @@ export default function ScheduleEvent() {
     endTime: '',
     venue: '',
     teamId: '',
+    notes: '',
   })
 
   // Conflict check result
@@ -162,6 +163,7 @@ export default function ScheduleEvent() {
         type: form.type,
         start,
         end,
+        notes: form.notes,
       })
       setConfirmed(data)
     } catch (err) {
@@ -329,6 +331,18 @@ export default function ScheduleEvent() {
               value={form.venue}
               onChange={(e) => setForm({ ...form, venue: e.target.value })}
               className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+
+          {/* Notes */}
+          <div className="col-span-2">
+            <label className="text-xs text-gray-400 mb-1 block">Coach Notes <span className="text-gray-600">(shown to athletes)</span></label>
+            <textarea
+              placeholder="e.g. Green shirts. Bring water. Warm-ups start 10min early."
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              rows={3}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
             />
           </div>
         </div>

@@ -133,3 +133,20 @@ export const coachAPI = {
   updateAssistantCoach: (id, data) => api.put(`/assistant-coaches/${id}`, data),
   removeAssistantCoach: (id) => api.delete(`/assistant-coaches/${id}`),
 };
+
+// Appointments
+export const appointmentAPI = {
+  getAppointments: () => api.get('/appointments'),
+  getAppointment: (id) => api.get(`/appointments/${id}`),
+  createAppointment: (data) => api.post('/appointments', data),
+  updateAppointment: (id, data) => api.patch(`/appointments/${id}`, data),
+  deleteAppointment: (id) => api.delete(`/appointments/${id}`),
+};
+
+// Notifications
+export const notificationAPI = {
+  getNotifications: () => api.get('/notifications'),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  markRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllRead: () => api.post('/notifications/read-all'),
+};
