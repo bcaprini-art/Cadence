@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { scheduleAPI, eventsAPI } from '../../lib/api';
+import api from '../../lib/api';
 import {
   format,
   parseISO,
@@ -12,6 +13,7 @@ import {
   endOfDay,
   isWithinInterval,
   addDays,
+  differenceInMinutes,
 } from 'date-fns';
 
 // Non-practice colors stay consistent
@@ -43,6 +45,14 @@ function TimeLabel({ iso }) {
   return <span className="text-slate-400">{format(d, 'EEE M/d h:mm a')}</span>;
 }
 
+function UrgencyBadge({ start }) {
+  const mins = differenceInMinutes(parseISO(start), new Date());
+  if (mins <= 0) return <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-medium">Now</span>;
+  if (mins <= 15) return <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-medium">in {mins}m</span>;
+  if (mins <= 60) return <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 font-medium">in {mins}m</span>;
+  return null;
+}
+
 export default function AthleteDashboard() {
   const { user } = useAuth();
   const theme = useTheme();
@@ -50,6 +60,7 @@ export default function AthleteDashboard() {
 
   const [blocks, setBlocks] = useState([]);
   const [events, setEvents] = useState([]);
+  const [pendingTodos, setPendingTodos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -58,8 +69,8 @@ export default function AthleteDashboard() {
       setLoading(true);
       setError(null);
       try {
-        // Fetch today's blocks + upcoming week of events in parallel
-        const [blocksRes, eventsRes] = await Promise.all([
+        // Fetch today's blocks + upcoming week of events + pending todos
+        const [blocksRes, eventsRes, todosRes] = await Promise.all([
           scheduleAPI.getBlocks({
             start: startOfDay(now).toISOString(),
             end: addDays(endOfDay(now), 7).toISOString(),
@@ -68,9 +79,12 @@ export default function AthleteDashboard() {
             start: startOfDay(now).toISOString(),
             end: addDays(now, 7).toISOString(),
           }),
+          api.get('/todos'),
         ]);
         setBlocks(blocksRes.data);
         setEvents(eventsRes.data);
+        const allTodos = Array.isArray(todosRes.data) ? todosRes.data : (todosRes.data?.todos || []);
+        setPendingTodos(allTodos.filter((t) => !t.completed));
       } catch (err) {
         setError(err.response?.data?.error || 'Failed to load dashboard');
       } finally {
@@ -91,6 +105,11 @@ export default function AthleteDashboard() {
     .filter((e) => parseISO(e.start) > now)
     .sort((a, b) => parseISO(a.start) - parseISO(b.start))
     .slice(0, 5);
+
+  // Next event: the soonest upcoming event today
+  const nextEvent = [...todayEvents, ...todayBlocks]
+    .filter((e) => parseISO(e.start) > now)
+    .sort((a, b) => parseISO(a.start) - parseISO(b.start))[0];
 
   if (loading) {
     return (
@@ -128,12 +147,106 @@ export default function AthleteDashboard() {
         </div>
       )}
 
+      {/* ════════════════════════════════════════════════════ */}
+      {/* PENDING ITEMS — uncompleted todos */}
+      {/* ════════════════════════════════════════════════════ */}
+      <section>
+        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
+          📋 Pending Items
+        </h2>
+        {pendingTodos.length === 0 ? (
+          <div className="bg-[#1e2d4a] rounded-xl border border-slate-700/50 p-6 text-center">
+            <p className="text-slate-400 text-sm">All caught up! No pending tasks.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {pendingTodos.slice(0, 5).map((todo) => (
+              <div
+                key={todo.id}
+                className="flex items-center gap-3 bg-[#1e2d4a] rounded-xl border border-slate-700/50 px-4 py-3"
+              >
+                <div className="w-2 h-2 rounded-full bg-yellow-400 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white">{todo.title}</p>
+                  {todo.category && (
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {todo.category}{todo.dueDate ? ` · Due ${format(parseISO(todo.dueDate), 'MMM d')}` : ''}
+                    </p>
+                  )}
+                </div>
+                {todo.priority && (
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                    todo.priority === 'high'
+                      ? 'bg-red-500/20 text-red-400'
+                      : todo.priority === 'medium'
+                      ? 'bg-yellow-500/20 text-yellow-400'
+                      : 'bg-green-500/20 text-green-400'
+                  }`}>
+                    {todo.priority}
+                  </span>
+                )}
+              </div>
+            ))}
+            {pendingTodos.length > 5 && (
+              <Link to="/todo" className="block text-center text-xs text-green-400 hover:text-green-300 pt-1">
+                + {pendingTodos.length - 5} more pending items
+              </Link>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* ════════════════════════════════════════════════════ */}
+      {/* NEXT UP — next event with crucial details */}
+      {/* ════════════════════════════════════════════════════ */}
+      {nextEvent && (
+        <section>
+          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
+            ⏰ Next Up
+          </h2>
+          <div className="bg-[#0d1526] rounded-2xl border border-green-500/40 p-5 shadow-lg shadow-green-500/10">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-lg font-bold text-white">
+                    {nextEvent.title || nextEvent.type}
+                  </h3>
+                  <UrgencyBadge iso={nextEvent.start} />
+                </div>
+                <p className="text-sm text-slate-300">
+                  {format(parseISO(nextEvent.start), 'h:mm a')} – {format(parseISO(nextEvent.end), 'h:mm a')}
+                </p>
+                {(nextEvent.venue?.name || nextEvent.notes) && (
+                  <div className="mt-2 space-y-1">
+                    {nextEvent.venue?.name && (
+                      <p className="text-sm text-slate-400">
+                        📍 {nextEvent.venue.name}{nextEvent.venue?.address ? ` — ${nextEvent.venue.address}` : ''}
+                      </p>
+                    )}
+                    {nextEvent.notes && (
+                      <p className="text-sm text-green-300 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
+                        📝 {nextEvent.notes}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+              <span className={`text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${
+                EVENT_TYPE_BADGE[nextEvent.type] || 'bg-slate-500/20 text-slate-400'
+              }`}>
+                {nextEvent.type}
+              </span>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatCard value={todayEvents.length + todayBlocks.length} label="Events today" color={theme.accentClass} theme={theme} />
         <StatCard value={upcoming.length} label="Upcoming" color="text-blue-400" theme={theme} />
         <StatCard value={blocks.length} label="Blocks this week" color="text-yellow-400" theme={theme} />
-        <StatCard value={0} label="Conflicts" color={theme.accentClass} theme={theme} />
+        <StatCard value={pendingTodos.length} label="Pending tasks" color="text-red-400" theme={theme} />
       </div>
 
       {/* Today's schedule */}
@@ -176,11 +289,17 @@ export default function AthleteDashboard() {
                         <p className="font-medium text-white text-sm flex items-center gap-1.5">
                           {isPractice && <span className="text-base">{theme.icon}</span>}
                           {item.title || item.type}
+                          {isEvent && parseISO(item.start) > now && (
+                            <UrgencyBadge iso={item.start} />
+                          )}
                         </p>
                         <p className="text-xs text-slate-400 mt-0.5">
                           {format(parseISO(item.start), 'h:mm a')} – {format(parseISO(item.end), 'h:mm a')}
                           {isEvent && item.venue?.name ? ` · ${item.venue.name}` : ''}
                         </p>
+                        {isEvent && item.notes && (
+                          <p className="text-xs text-green-300 mt-1">📝 {item.notes}</p>
+                        )}
                       </div>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${badgeClass}`}>
                         {item.type}

@@ -181,6 +181,7 @@ model Event {
   id          String    @id @default(cuid())
   teamId      String
   title       String
+  notes       String?   @default("")
   start       DateTime
   end         DateTime
   type        EventType

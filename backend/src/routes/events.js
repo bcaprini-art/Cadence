@@ -61,7 +61,7 @@ router.get('/:id', async (req, res) => {
 
 // POST /api/events — Coaches, AD, Admin
 router.post('/', role('COACH', 'AD', 'ADMIN'), async (req, res) => {
-  const { teamId, title, start, end, type, venueId } = req.body
+  const { teamId, title, notes, start, end, type, venueId } = req.body
 
   if (!teamId || !title || !start || !end || !type) {
     return res.status(400).json({ error: 'teamId, title, start, end, and type are required' })
@@ -71,6 +71,7 @@ router.post('/', role('COACH', 'AD', 'ADMIN'), async (req, res) => {
     data: {
       teamId,
       title,
+      notes: notes || '',
       start: new Date(start),
       end: new Date(end),
       type,
@@ -103,11 +104,12 @@ router.post('/', role('COACH', 'AD', 'ADMIN'), async (req, res) => {
 
 // PATCH /api/events/:id — Coaches, AD, Admin
 router.patch('/:id', role('COACH', 'AD', 'ADMIN'), async (req, res) => {
-  const { title, start, end, type, venueId } = req.body
+  const { title, notes, start, end, type, venueId } = req.body
   const event = await prisma.event.update({
     where: { id: req.params.id },
     data: {
       title,
+      notes,
       start: start ? new Date(start) : undefined,
       end: end ? new Date(end) : undefined,
       type,
