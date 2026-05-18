@@ -1,7 +1,11 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { mockRoster } from '../lib/mock';
+import { eventsAPI } from '../lib/api';
+import api from '../lib/api';
+import { format, parseISO, differenceInMinutes } from 'date-fns';
 
 const adminActions = [
   {
@@ -51,7 +55,7 @@ const coachActions = [
     path: '/team-availability',
     icon: '🔥',
     label: 'Team Availability',
-    desc: 'See who\'s free and when with the live heatmap',
+    desc: "See who's free and when with the live heatmap",
     badge: null,
   },
   {
@@ -95,6 +99,22 @@ const athleteActions = [
   },
 ];
 
+const EVENT_TYPE_BADGE = {
+  PRACTICE: 'bg-green-500/20 text-green-400',
+  GAME:     'bg-red-500/20 text-red-400',
+  TRAVEL:   'bg-yellow-500/20 text-yellow-400',
+  FILM:     'bg-indigo-500/20 text-indigo-400',
+  MEETING:  'bg-teal-500/20 text-teal-400',
+};
+
+function UrgencyBadge({ start }) {
+  const mins = differenceInMinutes(parseISO(start), new Date());
+  if (mins <= 0) return <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-medium">Now</span>;
+  if (mins <= 30) return <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-medium">in {mins}m</span>;
+  if (mins <= 60) return <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 font-medium">in {mins}m</span>;
+  return null;
+}
+
 export default function Home() {
   const { user, isCoach, isAdmin } = useAuth();
   const theme = useTheme();
@@ -102,8 +122,39 @@ export default function Home() {
   const actions = isAdmin ? adminActions : isCoach ? coachActions : athleteActions;
   const atRisk = mockRoster.filter(a => a.cara_hours / a.cara_limit >= 0.85);
 
-  // Build action card gradient using theme colors
-  const sportCardGradient = `from-[${theme.primary}]/20 to-[${theme.secondary}]/10`;
+  // ─── Athlete-specific dashboard data ──────────────────────────
+  const [pendingTodos, setPendingTodos] = useState([]);
+  const [nextEvent, setNextEvent] = useState(null);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isCoach && !isAdmin) {
+      // Fetch pending todos + next event for athletes
+      const fetchAthleteData = async () => {
+        try {
+          const [todosRes, eventsRes] = await Promise.all([
+            api.get('/todos'),
+            eventsAPI.getEvents({}),
+          ]);
+          const allTodos = Array.isArray(todosRes.data) ? todosRes.data : (todosRes.data?.todos || []);
+          setPendingTodos(allTodos.filter((t) => !t.completed));
+
+          const now = new Date();
+          const upcomingEvents = (Array.isArray(eventsRes.data) ? eventsRes.data : [])
+            .filter((e) => parseISO(e.start) > now)
+            .sort((a, b) => parseISO(a.start) - parseISO(b.start));
+          setNextEvent(upcomingEvents[0] || null);
+        } catch {
+          // Dashboard data is non-critical — fail silently
+        } finally {
+          setDashboardLoading(false);
+        }
+      };
+      fetchAthleteData();
+    } else {
+      setDashboardLoading(false);
+    }
+  }, [isCoach, isAdmin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div>
@@ -122,6 +173,103 @@ export default function Home() {
           · {user?.sport || 'Cadence'} · {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
         </p>
       </div>
+
+      {/* ════════════════════════════════════════════════════ */}
+      {/* ATHLETE: Pending Items + Next Up */}
+      {/* ════════════════════════════════════════════════════ */}
+      {!isCoach && !isAdmin && !dashboardLoading && (
+        <>
+          {/* Pending Items */}
+          <section className="mb-6">
+            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
+              📋 Pending Items
+            </h2>
+            {pendingTodos.length === 0 ? (
+              <div className="bg-[#1e2d4a] rounded-xl border border-slate-700/50 p-5 text-center">
+                <p className="text-slate-400 text-sm">All caught up! No pending tasks.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {pendingTodos.slice(0, 5).map((todo) => (
+                  <div
+                    key={todo.id}
+                    className="flex items-center gap-3 bg-[#1e2d4a] rounded-xl border border-slate-700/50 px-4 py-3"
+                  >
+                    <div className="w-2 h-2 rounded-full bg-yellow-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white">{todo.title}</p>
+                      {todo.category && (
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {todo.category}{todo.dueDate ? ` · Due ${format(parseISO(todo.dueDate), 'MMM d')}` : ''}
+                        </p>
+                      )}
+                    </div>
+                    {todo.priority && (
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                        todo.priority === 'high'
+                          ? 'bg-red-500/20 text-red-400'
+                          : todo.priority === 'medium'
+                          ? 'bg-yellow-500/20 text-yellow-400'
+                          : 'bg-green-500/20 text-green-400'
+                      }`}>
+                        {todo.priority}
+                      </span>
+                    )}
+                  </div>
+                ))}
+                {pendingTodos.length > 5 && (
+                  <button onClick={() => navigate('/todo')} className="block text-center text-xs text-green-400 hover:text-green-300 pt-1 w-full">
+                    + {pendingTodos.length - 5} more pending items
+                  </button>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* Next Up */}
+          {nextEvent && (
+            <section className="mb-6">
+              <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
+                ⏰ Next Up
+              </h2>
+              <div className="bg-[#0d1526] rounded-2xl border border-green-500/40 p-5 shadow-lg shadow-green-500/10">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-lg font-bold text-white">
+                        {nextEvent.title || nextEvent.type}
+                      </h3>
+                      <UrgencyBadge start={nextEvent.start} />
+                    </div>
+                    <p className="text-sm text-slate-300">
+                      {format(parseISO(nextEvent.start), 'h:mm a')} – {format(parseISO(nextEvent.end), 'h:mm a')}
+                    </p>
+                    {(nextEvent.venue?.name || nextEvent.notes) && (
+                      <div className="mt-2 space-y-1">
+                        {nextEvent.venue?.name && (
+                          <p className="text-sm text-slate-400">
+                            📍 {nextEvent.venue.name}
+                          </p>
+                        )}
+                        {nextEvent.notes && (
+                          <p className="text-sm text-green-300 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">
+                            📝 {nextEvent.notes}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0 ${
+                    EVENT_TYPE_BADGE[nextEvent.type] || 'bg-slate-500/20 text-slate-400'
+                  }`}>
+                    {nextEvent.type}
+                  </span>
+                </div>
+              </div>
+            </section>
+          )}
+        </>
+      )}
 
       {/* Quick stats (coach only) */}
       {isCoach && (
